@@ -62,10 +62,10 @@ class AnomalyDetector:
             A Numpy matrix.
 
         """
-        data_list = [self.d_f[reg_var].values() for reg_var in
+        data_list = [self.d_f[reg_var].values for reg_var in
                      self.regression_vars]
         if self.use_response_var:
-            data_list.append(self.d_f[self.response_var].values())
+            data_list.append(self.d_f[self.response_var].values)
         return np.matrix(list(zip(*data_list)))
 
     def scale_data(self, method=StandardScaler()):
@@ -160,7 +160,7 @@ class KMeansAnomalyDetector(AnomalyDetector):
 
         # Iterate through dataframe rows and get appropriate distances.
         self.assign_clusters(kmeans_result)
-        self.d_f['centroid_distance'] = [transformed[:, label][idx]
+        self.d_f['outlier_metric'] = [transformed[:, label][idx]
                                          for idx, label in
                                          enumerate(self.d_f['cluster_label'])]
         return

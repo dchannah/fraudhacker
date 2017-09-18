@@ -42,9 +42,9 @@ class PandasDBReader:
             config = yaml.load(f)
 
         # Set up an SQL connection.
-        self.connection = psycopg2.connect(config['database_name'],
-                                           config['user_name'],
-                                           config['password'])
+        self.connection = psycopg2.connect(database=config['database_name'],
+                                           user=config['user_name'],
+                                           password=config['password'])
 
         # Build a query from the provided region/specialty lists.
         query_dict = {"provider_type": specialty_list,
