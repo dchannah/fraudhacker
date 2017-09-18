@@ -6,12 +6,12 @@ __email__ = "dansserioubusisness@gmail.com"
 from flask import Flask, render_template, request
 from database_tools import PandasDBReader
 from anomaly_tools import KMeansAnomalyDetector
+from plotting_tools import generate_bar_plot
 from fh_config import regional_options, specialty_options, regression_vars,\
     response_var
 
 # Global variables
 YAML_CONFIG = "./config.yaml"
-
 
 app = Flask(__name__)
 
@@ -36,9 +36,21 @@ def fraudhacker_output():
                                 use_response_var=True)
     kmd.compute_centroid_distances(num_clusters=8)
 
-    # As a temporary check, get the worst 10 offenders.
-    worst_10 = kmd.d_f.sort_values(by=['outlier_metric'],
-                                   ascending=False).head(10)
+    # Testing the "worst offenders" output.
+    worst_10 = kmd.get_most_frequent()
 
-    return render_template("output.html",
+    # Make a bar plot of these suspects.
+    fig_div, fig_script = generate_bar_plot(worst_10,
+                                            plt_title="Suspicious Providers")
+
+    return render_template("output.html", fig_script=fig_script,
+                           fig_div=fig_div,
                            dataframe=worst_10.to_html(classes='table'))
+
+
+def main():
+    app.run(debug=True)
+
+
+if __name__ == "__main__":
+    main()

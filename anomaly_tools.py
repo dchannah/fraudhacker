@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 
@@ -79,6 +80,50 @@ class AnomalyDetector:
 
         """
         return method.fit_transform(self.data_matrix)
+
+    def get_most_frequent(self, threshold, top_n_return=10):
+        """Gets the most frequent offenders ranked by number of outliers.
+
+        This method finds all of the outliers associated with a particular
+        provider (i.e. NPI) and returns a dataframe of the top N providers.
+        If the outlier metric hasn't been defined, an error will be thrown.
+
+        Note:
+            Threshold is typically defined *very* differently for different
+            outlier detection schemes; check the inherited methods in those
+            subclasses for more information.
+
+        Args:
+            threshold (float): What cutoff defines an outlier?
+            top_n_return (int): How many offenders do we want?
+
+        Returns:
+            A Pandas dataframe which is a subset of the larger dataframe.
+
+        """
+        if 'outlier_metric' not in self.d_f.columns:
+            print("Outlier metrics must be calculated prior to grouping.")
+            return
+        else:
+            suspect_dict = {}
+            for row_tuple in self.d_f.iterrows():
+                row = row_tuple[1]
+                if row["npi"] not in suspect_dict:
+                    suspect_dict[row["npi"]] = {}
+                    suspect_dict[row["npi"]]["last_name"] = \
+                        row["nppes_provider_last_org_name"]
+                    suspect_dict[row["npi"]]["address"] = {
+                        "street1": row['nppes_provider_street1'],
+                        "street2": row['nppes_provider_street2'],
+                        "zip": row['nppes_provider_zip']
+                    }
+                    suspect_dict[row["npi"]]["outlier_count"] = 0
+                if row["outlier_metric"] > threshold:
+                    suspect_dict[row["npi"]]["outlier_count"] += 1
+            suspect_d_f = pd.DataFrame.from_dict(suspect_dict, orient='index')
+            worst = suspect_d_f.sort_values(by="outlier_count", ascending=False)
+
+            return worst.head(top_n_return)
 
 
 class KMeansAnomalyDetector(AnomalyDetector):
@@ -164,3 +209,19 @@ class KMeansAnomalyDetector(AnomalyDetector):
                                          for idx, label in
                                          enumerate(self.d_f['cluster_label'])]
         return
+
+    def get_most_frequent(self, threshold=None, top_n_return=10, percent=10):
+        """Inherited from parent class, exists here to define threshold.
+
+        Args:
+            threshold (float): Cutoff metric to determine if outlier.
+            top_n_return (int): How many offenders do we want a list of?
+            percent (float): Top <percent> % of distant points are outliers.
+
+        Returns:
+            A Pandas dataframe which is a subset of the larger dataframe.
+
+        """
+        all_centroid_distances = self.d_f['outlier_metric'].values
+        threshold = np.percentile(all_centroid_distances, 100 - percent)
+        return super().get_most_frequent(threshold)
