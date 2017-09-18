@@ -42,10 +42,3 @@ def fraudhacker_output():
 
     return render_template("output.html",
                            dataframe=worst_10.to_html(classes='table'))
-
-
-
-
-
-
-
