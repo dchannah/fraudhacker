@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+import hdbscan
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 
@@ -81,7 +82,7 @@ class AnomalyDetector:
         """
         return method.fit_transform(self.data_matrix)
 
-    def get_most_frequent(self, threshold, top_n_return=10):
+    def get_most_frequent(self, threshold):
         """Gets the most frequent offenders ranked by number of outliers.
 
         This method finds all of the outliers associated with a particular
@@ -95,7 +96,6 @@ class AnomalyDetector:
 
         Args:
             threshold (float): What cutoff defines an outlier?
-            top_n_return (int): How many offenders do we want?
 
         Returns:
             A Pandas dataframe which is a subset of the larger dataframe.
@@ -123,7 +123,20 @@ class AnomalyDetector:
             suspect_d_f = pd.DataFrame.from_dict(suspect_dict, orient='index')
             worst = suspect_d_f.sort_values(by="outlier_count", ascending=False)
 
-            return worst.head(top_n_return)
+            return worst
+
+    def get_n_most_frequent(self, sorted_df, top_n_return=10):
+        """Gets the n most frequent offenders from a sorted list of them.
+
+        Args:
+            sorted_df (DataFrame): A sorted Pandas DataFrame
+            top_n_return (int): How many of the list do we want?
+
+        Returns:
+            A DataFrame containing the n most outlier-y providers.
+
+        """
+        return sorted_df.head(top_n_return)
 
 
 class KMeansAnomalyDetector(AnomalyDetector):
@@ -201,13 +214,14 @@ class KMeansAnomalyDetector(AnomalyDetector):
         """
         # Perform k-means clustering and get the cluster-distance space data.
         kmeans_result = self.cluster_data(num_clusters)
+        self.assign_clusters(kmeans_result)
         transformed = kmeans_result.transform(self.scaled_dm)
 
         # Iterate through dataframe rows and get appropriate distances.
         self.assign_clusters(kmeans_result)
         self.d_f['outlier_metric'] = [transformed[:, label][idx]
-                                         for idx, label in
-                                         enumerate(self.d_f['cluster_label'])]
+                                      for idx, label in
+                                      enumerate(self.d_f['cluster_label'])]
         return
 
     def get_most_frequent(self, threshold=None, top_n_return=10, percent=10):
@@ -225,3 +239,83 @@ class KMeansAnomalyDetector(AnomalyDetector):
         all_centroid_distances = self.d_f['outlier_metric'].values
         threshold = np.percentile(all_centroid_distances, 100 - percent)
         return super().get_most_frequent(threshold)
+
+
+class HDBAnomalyDetector(AnomalyDetector):
+    """Class for outlier detection based on HDBScan clustering.
+
+    This anomaly detector is based on a better clustering algorithm (HDBSCAN)
+    but otherwise functions similarly to the K-means clustering data - we are
+    clustering the data and looking for outliers.
+
+    Attributes:
+        regression_vars (list): List of labels for regression variables.
+        response_var (str): Label for the response variable.
+        d_f (DataFrame): A Pandas dataframe containing queried data.
+        use_response_var (Boolean): Use response variable in clustering?
+        data_matrix (Matrix): A Numpy matrix object of value data.
+        scaled_dm (Matrix): A scaled Numpy matrix of the data.
+
+    """
+
+    def __init__(self, regression_vars, response_var, d_f, use_response_var):
+        """Initialization for KMeansAnomalyDetector.
+
+        Args:
+            regression_vars (list): A list of strings for regression variables.
+            response_var (str): Label for the response variable for regression.
+            d_f (DataFrame): A Pandas DataFrame containing queried data.
+            use_response_var (Boolean): Use response variable in clustering?
+
+        """
+        super().__init__(regression_vars, response_var, d_f,
+                         use_response_var)
+        self.scaled_dm = self.scale_data()
+
+    def cluster_data(self, min_size):
+        """Perform clustering on the data using the HDBSCAN algorithm.
+
+        Args:
+            min_size (int): Minimum cluster size.
+
+        Returns:
+            A fit from an HDBSCAN clusterer.
+
+        """
+        return hdbscan.HDBSCAN(min_cluster_size=min_size).fit(self.scaled_dm)
+
+    def get_outlier_scores(self, min_size):
+        """Gets the outlier score associated with each data point.
+
+        Rather than returning anything, this method populates the
+        "outlier_metric" column of the object's internal dataframe.
+
+        Args:
+            min_size (int): Minimum cluster size to the feed to the algorihtm.
+
+        Returns:
+            None
+
+        """
+        clustered_data = self.cluster_data(min_size=min_size)
+        outlier_scores = clustered_data.outlier_scores_
+        self.d_f['outlier_metric'] = [outlier_scores[idx] for idx, pt in
+                                      enumerate(self.d_f['npi'])]
+        return
+
+    def get_most_frequent(self, threshold=None, percent=10):
+        """Gets the most frequent
+
+        Args:
+            threshold (float): Cutoff in metric to define an outlier.
+            percent (int): Top N% of outliers are returned.
+
+        Returns:
+            A Pandas DataFrame which is a subset of the larger dataframe.
+
+        """
+        all_outlier_scores = self.d_f['outlier_metric'].values
+        threshold = np.percentile(all_outlier_scores, 100-percent)
+        return super().get_most_frequent(threshold)
+
+

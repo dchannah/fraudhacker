@@ -5,7 +5,7 @@ __email__ = "dansserioubusisness@gmail.com"
 
 from flask import Flask, render_template, request
 from database_tools import PandasDBReader
-from anomaly_tools import KMeansAnomalyDetector
+from anomaly_tools import KMeansAnomalyDetector, HDBAnomalyDetector
 from plotting_tools import generate_bar_plot
 from fh_config import regional_options, specialty_options, regression_vars,\
     response_var
@@ -32,12 +32,24 @@ def fraudhacker_output():
     pdb_reader = PandasDBReader(YAML_CONFIG, [state], [specialty])
 
     # Generate an anomaly detector using the queried data and find outliers.
+
     kmd = KMeansAnomalyDetector(regression_vars, response_var, pdb_reader.d_f,
                                 use_response_var=True)
     kmd.compute_centroid_distances(num_clusters=8)
 
     # Testing the "worst offenders" output.
-    worst_10 = kmd.get_most_frequent()
+    worst = kmd.get_most_frequent()
+    worst_10 = kmd.get_n_most_frequent(worst)
+
+    """
+    hdb = HDBAnomalyDetector(regression_vars, response_var, pdb_reader.d_f,
+                             use_response_var=True)
+    hdb.get_outlier_scores(min_size=15)
+    
+    worst = hdb.get_most_frequent()
+    worst_10 = hdb.get_n_most_frequent(worst)
+    """
+
 
     # Make a bar plot of these suspects.
     fig_div, fig_script = generate_bar_plot(worst_10,
