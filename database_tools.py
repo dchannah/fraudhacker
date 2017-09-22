@@ -16,43 +16,32 @@ populates the same fields so that the Flask app can take CSV input.
 """
 
 
-class PandasDBReader:
-    """Class for interacting with the PostgreSQL database containing CMS data.
-
-    Right now this class bundles the "go-between" for the Flask app and the
-    database.
+class CMSDBReader:
+    """General superclass for database readers.
 
     Attributes:
-        connection (psycopg2): A SQL database connection.
-        d_f (DataFrame): A Pandas data frame.
+        configuration (JSON): A YAML-read configuration set.
+        connection (psycopg2): An SQL database connection.
 
     """
 
-    def __init__(self, config_yaml, region_list, specialty_list):
-        """Initialization for the PandasDBReader.
+    def __init__(self, config_yaml):
+        """Initialization for all of the DB Readers.
 
         Args:
-            config_yaml (YAML): A YAML file containing configuration info.
-            region_list (list): A list of US states to get info from.
-            specialty_list (list): A list of specialties to get info on.
+            config_yaml (str): Path to a configuration yaml.
 
         """
         # Get the DB reader config from a YAML file.
         with open(config_yaml, 'r') as f:
-            config = yaml.load(f)
+            self.configuration = yaml.load(f)
 
         # Set up an SQL connection.
-        self.connection = psycopg2.connect(database=config['database_name'],
-                                           user=config['user_name'],
-                                           password=config['password'])
-
-        # Build a query from the provided region/specialty lists.
-        query_dict = {"provider_type": specialty_list,
-                      "nppes_provider_state": region_list}
-        query = self.build_query(config['features'], query_dict)
-
-        # Use the query to create a dataframe from the database.
-        self.d_f = pd.read_sql_query(query, self.connection)
+        self.connection = psycopg2.connect(
+            database=self.configuration['database_name'],
+            user=self.configuration['user_name'],
+            password=self.configuration['password']
+        )
 
     @staticmethod
     def build_query(need_cols, q_dict, table='cms'):
@@ -81,3 +70,69 @@ class PandasDBReader:
             opt_list = str(q_dict[cname]).replace('[', '(').replace(']', ')')
             query_str += cname + " IN " + opt_list + " AND "
         return query_str[:-4]  # Need to remove final AND
+
+
+class PandasDBReader(CMSDBReader):
+    """Class for interacting with the PostgreSQL database containing CMS data.
+
+    Right now this class bundles the "go-between" for the Flask app and the
+    database.
+
+    Attributes:
+        connection (psycopg2): A SQL database connection.
+        d_f (DataFrame): A Pandas data frame.
+
+    """
+
+    def __init__(self, config_yaml, region_list, specialty_list):
+        """Initialization for the PandasDBReader.
+
+        Args:
+            config_yaml (YAML): A YAML file containing configuration info.
+            region_list (list): A list of US states to get info from.
+            specialty_list (list): A list of specialties to get info on.
+
+        """
+        super().__init__(config_yaml)
+
+        # Build a query from the provided region/specialty lists.
+        query_dict = {"provider_type": specialty_list,
+                      "nppes_provider_state": region_list}
+        query = self.build_query(self.configuration['features'], query_dict)
+
+        # Use the query to create a dataframe from the database.
+        self.d_f = pd.read_sql_query(query, self.connection)
+
+
+class OutlierCountDBReader(CMSDBReader):
+    """A database reader class for the outlier counts table (for speed!)
+
+    Attributes:
+        connection (psycopg2): A SQL database connection.
+        d_f (DataFrame): A Pandas data frame.
+
+    """
+
+    def __init__(self, config_yaml, region_list, specialty_list, metric='hdb'):
+        """Initialization for the PandasDBReader.
+
+        Args:
+            config_yaml (YAML): A YAML file containing configuration info.
+            region_list (list): A list of US states to get info from.
+            specialty_list (list): A list of specialties to get info on.
+            metric (str): Which outlier metric should be pulled?
+
+        """
+        super().__init__(config_yaml)
+
+        outlier_cols = ['npi', 'state', 'lastname', 'provider_type',
+                        'outlier_count']
+        table_name = "provider_anomaly_counts_" + metric
+
+        # Build a query from the provided region/specialty lists.
+        query_dict = {"provider_type": specialty_list,
+                      "state": region_list}
+        query = self.build_query(outlier_cols, query_dict, table=table_name)
+
+        # Use the query to create a dataframe from the database.
+        self.d_f = pd.read_sql_query(query, self.connection)

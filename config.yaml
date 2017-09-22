@@ -8,6 +8,7 @@ features:
         - 'nppes_provider_street1'
         - 'nppes_provider_street2'
         - 'nppes_provider_zip'
+        - 'nppes_provider_state'
         - 'line_srvc_cnt'
         - 'bene_unique_cnt'
         - 'bene_day_srvc_cnt'

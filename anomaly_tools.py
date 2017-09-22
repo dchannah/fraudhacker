@@ -115,7 +115,8 @@ class AnomalyDetector:
                     suspect_dict[row["npi"]]["address"] = {
                         "street1": row['nppes_provider_street1'],
                         "street2": row['nppes_provider_street2'],
-                        "zip": row['nppes_provider_zip']
+                        "zip": row['nppes_provider_zip'],
+                        "state": row['nppes_provider_state']
                     }
                     suspect_dict[row["npi"]]["outlier_count"] = 0
                 if row["outlier_metric"] > threshold:
@@ -125,7 +126,8 @@ class AnomalyDetector:
 
             return worst
 
-    def get_n_most_frequent(self, sorted_df, top_n_return=10):
+    @staticmethod
+    def get_n_most_frequent(sorted_df, top_n_return=20):
         """Gets the n most frequent offenders from a sorted list of them.
 
         Args:
@@ -303,7 +305,7 @@ class HDBAnomalyDetector(AnomalyDetector):
                                       enumerate(self.d_f['npi'])]
         return
 
-    def get_most_frequent(self, threshold=None, percent=10):
+    def get_most_frequent(self, threshold=None, percent=2):
         """Gets the most frequent
 
         Args:

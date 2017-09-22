@@ -4,8 +4,8 @@ __author__ = "Daniel Hannah"
 __email__ = "dansserioubusisness@gmail.com"
 
 from flask import Flask, render_template, request
-from database_tools import PandasDBReader
-from anomaly_tools import KMeansAnomalyDetector, HDBAnomalyDetector
+from database_tools import OutlierCountDBReader
+# from anomaly_tools import KMeansAnomalyDetector, HDBAnomalyDetector
 from plotting_tools import generate_bar_plot
 from fh_config import regional_options, specialty_options, regression_vars,\
     response_var
@@ -28,11 +28,13 @@ def fraudhacker_output():
     state = request.form.get('geo_select')
     specialty = request.form.get('provider_select')
 
+    odb = OutlierCountDBReader(YAML_CONFIG, [state], [specialty])
+
+    """
+    Old code for doing the analysis on the fly below:
+    
     # Build a Pandas database reader based on those choices (and config).
     pdb_reader = PandasDBReader(YAML_CONFIG, [state], [specialty])
-
-    # Generate an anomaly detector using the queried data and find outliers.
-
     kmd = KMeansAnomalyDetector(regression_vars, response_var, pdb_reader.d_f,
                                 use_response_var=True)
     kmd.compute_centroid_distances(num_clusters=8)
@@ -40,7 +42,7 @@ def fraudhacker_output():
     # Testing the "worst offenders" output.
     worst = kmd.get_most_frequent()
     worst_10 = kmd.get_n_most_frequent(worst)
-
+    """
     """
     hdb = HDBAnomalyDetector(regression_vars, response_var, pdb_reader.d_f,
                              use_response_var=True)
@@ -50,14 +52,15 @@ def fraudhacker_output():
     worst_10 = hdb.get_n_most_frequent(worst)
     """
 
+    worst_20 = odb.d_f.head(20)
 
     # Make a bar plot of these suspects.
-    fig_div, fig_script = generate_bar_plot(worst_10,
-                                            plt_title="Suspicious Providers")
+    fig_div, fig_script = generate_bar_plot(worst_20,
+                                            plt_title="Anomalies by Provider")
 
     return render_template("output.html", fig_script=fig_script,
                            fig_div=fig_div,
-                           dataframe=worst_10.to_html(classes='table'))
+                           dataframe=worst_20.to_html(classes='table'))
 
 
 def main():
