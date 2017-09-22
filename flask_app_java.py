@@ -1,14 +1,11 @@
 # -*- coding: utf-8 -*-
 
 __author__ = "Daniel Hannah"
-__email__ = "dansserioubusisness@gmail.com"
+__email__ = "dan@danhannah.site"
 
 from flask import Flask, render_template, request
 from database_tools import OutlierCountDBReader
-# from anomaly_tools import KMeansAnomalyDetector, HDBAnomalyDetector
-from plotting_tools import generate_bar_plot
-from fh_config import regional_options, specialty_options, regression_vars,\
-    response_var
+from fh_config import regional_options, specialty_options
 
 # Global variables
 YAML_CONFIG = "./config.yaml"
@@ -36,7 +33,8 @@ def fraudhacker_output():
 
     labels = [(l_n + " (" + npi + ")") for l_n, npi in zip(last_names, npis)]
 
-    return render_template("charts_internal.html", labels=labels, cts=o_cts, state=state, specialty=specialty)
+    return render_template("charts_internal.html", labels=labels, cts=o_cts,
+                           state=state, specialty=specialty)
 
 
 def main():

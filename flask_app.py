@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 __author__ = "Daniel Hannah"
-__email__ = "dansserioubusisness@gmail.com"
+__email__ = "dan@danhannah.site"
 
 from flask import Flask, render_template, request
 from database_tools import OutlierCountDBReader

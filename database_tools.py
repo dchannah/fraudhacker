@@ -5,7 +5,7 @@ import psycopg2
 import pandas as pd
 
 __author__ = "Daniel Hannah"
-__email__ = "dansseriousbusiness@gmail.com"
+__email__ = "dan@danhannah.site"
 
 """Tools for interacting with a PostgreSQL database that stores CMS claim data.
 

@@ -7,7 +7,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 
 __author__ = "Daniel Hannah"
-__email__ = "dansseriousbusiness@gmail.com"
+__email__ = "dan@danhannah.site"
 
 """Tools and classes for anomaly detection in insurance claims data sets.
 
