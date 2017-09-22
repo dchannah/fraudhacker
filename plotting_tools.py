@@ -1,11 +1,21 @@
 # -*- coding: utf-8 -*-
 
-from math import pi
 from bokeh.models import ColumnDataSource, DataRange1d, SingleIntervalTicker,\
     LinearAxis, LabelSet
 from bokeh.plotting import figure
 from bokeh.models.glyphs import HBar
 from bokeh.embed import components
+
+__author__ = "Daniel Hannah"
+__email__ = "dan@danhannah.site"
+
+"""Tools for plotting bar charts with Bokeh.
+
+This set of tools has been deprecated and is no longer in use on FraudHacker (I
+switched to chartJS for a variety of reasons), but is here just in case it
+becomes useful in the future.
+
+"""
 
 
 def render_bar_plot(source, plt_title):
