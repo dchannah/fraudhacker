@@ -37,6 +37,10 @@ def fraudhacker_output():
                            state=state, specialty=specialty)
 
 
+@app.route('/slides')
+def show_slides():
+    return render_template("slides.html")
+
 def main():
     app.run(debug=True)
 
