@@ -5,6 +5,7 @@ from bokeh.models import ColumnDataSource, DataRange1d, SingleIntervalTicker,\
 from bokeh.plotting import figure
 from bokeh.models.glyphs import HBar
 from bokeh.embed import components
+from fh_config import fraudulent_npis
 
 __author__ = "Daniel Hannah"
 __email__ = "dan@danhannah.site"
@@ -111,3 +112,22 @@ def generate_bar_plot(w_n_df, bar_value='outlier_count', plt_title=None):
     """
     data_source = create_source(w_n_df.iloc[::-1], bar_value)
     return render_bar_plot(data_source, plt_title=plt_title)
+
+
+def get_bar_colors(target_npis):
+    """Generates a list of bar colors (to pass on to JavaScript) for NPIs.
+
+    Args:
+        target_npis (list):  A list of the NPIs we seek to plot.
+
+    Returns:
+        A list of appropriate RGBA values in the same order as the list.
+
+    """
+    colors = []
+    for npi in target_npis:
+        if npi in fraudulent_npis:
+            colors.append("rgba(255, 0, 0, 1)")
+        else:
+            colors.append("rgba(2, 117, 216, 1)")
+    return colors

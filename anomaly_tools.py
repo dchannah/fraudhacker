@@ -3,7 +3,7 @@
 import numpy as np
 import pandas as pd
 import hdbscan
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, RobustScaler
 from sklearn.cluster import KMeans
 
 __author__ = "Daniel Hannah"
