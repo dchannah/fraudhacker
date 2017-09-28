@@ -119,8 +119,19 @@ class AnomalyDetector:
                         "state": row['nppes_provider_state']
                     }
                     suspect_dict[row["npi"]]["outlier_count"] = 0
+                    suspect_dict[row["npi"]]["total_num_proc"] = 0
+                    suspect_dict[row["npi"]]["outlier_count_rate"] = 0
+                    suspect_dict[row["npi"]]["cost_to_medicare"] = 0
+                suspect_dict[row["npi"]]["total_num_proc"] += \
+                    int(row["line_srvc_cnt"])
                 if row["outlier_metric"] > threshold:
                     suspect_dict[row["npi"]]["outlier_count"] += 1
+                    added_cost = float(row["line_srvc_cnt"]) * \
+                                 float(row["average_medicare_payment_amt"])
+                    suspect_dict[row["npi"]]["cost_to_medicare"] += added_cost
+                new_rate = suspect_dict[row["npi"]]["outlier_count"] / \
+                           suspect_dict[row["npi"]]["total_num_proc"]
+                suspect_dict[row["npi"]]["outlier_count_rate"] = new_rate
             suspect_d_f = pd.DataFrame.from_dict(suspect_dict, orient='index')
             worst = suspect_d_f.sort_values(by="outlier_count", ascending=False)
 

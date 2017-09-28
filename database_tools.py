@@ -113,7 +113,7 @@ class OutlierCountDBReader(CMSDBReader):
 
     """
 
-    def __init__(self, config_yaml, region_list, specialty_list, metric='hdb'):
+    def __init__(self, config_yaml, region_list, specialty_list, metric='hdb_total'):
         """Initialization for the PandasDBReader.
 
         Args:
@@ -126,13 +126,15 @@ class OutlierCountDBReader(CMSDBReader):
         super().__init__(config_yaml)
 
         outlier_cols = ['npi', 'state', 'lastname', 'provider_type',
-                        'outlier_count']
+                        'outlier_count', 'cost', 'outlier_rate']
         table_name = "provider_anomaly_counts_" + metric
+        print(table_name)
 
         # Build a query from the provided region/specialty lists.
         query_dict = {"provider_type": specialty_list,
                       "state": region_list}
         query = self.build_query(outlier_cols, query_dict, table=table_name)
+        print("RUNNING QUERY " + query)
 
         # Use the query to create a dataframe from the database.
         self.d_f = pd.read_sql_query(query, self.connection)

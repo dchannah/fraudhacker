@@ -32,12 +32,6 @@
           </a>
         </li>
         <li class="nav-item" data-toggle="tooltip" data-placement="right" title="Charts">
-          <a class="nav-link" href="charts_internal">
-            <i class="fa fa-fw fa-area-chart"></i>
-            <span class="nav-link-text">Visualization</span>
-          </a>
-        </li>
-        <li class="nav-item" data-toggle="tooltip" data-placement="right" title="Charts">
           <a class="nav-link" href="about">
             <i class="fa fa-fw fa-area-chart"></i>
             <span class="nav-link-text">About FraudHacker</span>
@@ -73,11 +67,24 @@
           <!-- Example Bar Chart Card-->
           <div class="card mb-3">
             <div class="card-header">
-		    <i class="fa fa-bar-chart"></i> Anomalous Procedures by Provider ({{ specialty }} in {{ state }})</div>
+		    <i class="fa fa-bar-chart"></i> Anomalous Procedures by Provider ({{ specialty }} in {{ state }}) (<span style="color:#FF0000">Convicted of fraud</span>, <span style="color:#0000FF">status unknown</span>)</div>
             <div class="card-body">
               <canvas id="myBarChart" width="100" height="50"></canvas>
+<div>Chart Data:
+  <select id="chartData" name="Chart Data">
+    <option value="outliers">Outliers</option>
+    <option value="outlier_rate">Percentage of Outliers</option>
+  </select>  
+</div>
             </div>
           </div>
+	  <div class="card mb-3">
+		  <div class="card-header">
+			  <i class="fa fa-bar-chart"></i> Cost to Medicare by Provider ($) ({{ specialty }} in {{ state }})</div>
+	    		  <div class="card-body">
+		              <canvas id="myCostChart" width="100" height="50"></canvas>
+	                  </div>
+	  </div>
         </div>
       </div>
     </div>
@@ -126,7 +133,26 @@
     // -- Set new default font family and font color to mimic Bootstrap's default styling
     Chart.defaults.global.defaultFontFamily = '-apple-system,system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
     Chart.defaults.global.defaultFontColor = '#292b2c';
-    // -- Bar Chart Example
+
+    // What we need to make this somewhat easier is a dictionary from which to re-populate the chart data
+    var datadict = {
+	    outliers: {{ cts|safe }},
+	    outlier_rate: {{ rate_cts|safe }}
+    }
+    var labeldict = {
+	    outliers: {{ labels|safe }},
+	    outlier_rate: {{ rate_labels|safe }}
+    }
+    var costdict = {
+	    outliers: {{ costs|safe }},
+	    outlier_rate: {{ rate_costs|safe }}
+    }
+    var colordict = {
+	    outliers: {{ colorlist|safe }},
+	    outlier_rate: {{ rate_colors|safe }}
+    }
+
+    // -- Bar Chart 
     var ctx = document.getElementById("myBarChart");
     var myLineChart = new Chart(ctx, {
       // type: 'bar',
@@ -135,9 +161,10 @@
 	      labels: {{ labels|safe}},
         datasets: [{
           label: "Anomalous Procedures",
-          backgroundColor: "rgba(2,117,216,1)",
-          borderColor: "rgba(2,117,216,1)",
-	  data: {{ cts|safe }} ,
+          // backgroundColor: "rgba(2,117,216,1)",
+	  backgroundColor: {{ colorlist|safe }},
+          borderColor: "rgba(255,255,255,1)",
+	  data: {{ cts|safe }}
         }],
       },
       options: {
@@ -151,14 +178,14 @@
             },
             ticks: {
               maxTicksLimit: 6,
-	      fontSize: 25
+	      fontSize: 15
             }
           }],
           yAxes: [{
             ticks: {
               min: 0,
               max: 15000,
-	      fontSize: 25,
+	      fontSize: 15,
               maxTicksLimit: 5
             },
             gridLines: {
@@ -171,6 +198,67 @@
         }
       }
     });
+    var chartData = document.getElementById('chartData');
+    chartData.addEventListener( 'change', function(){
+	selected = chartData.options[chartData.selectedIndex].value
+	myLineChart.data.datasets[0].data = datadict[selected]
+        myLineChart.data.labels =  labeldict[selected]
+	myLineChart.data.backgroundColor = colordict[selected]
+	myLineChart.update();
+});
+    var ctxCost = document.getElementById("myCostChart");
+    var myCostChart = new Chart(ctxCost, {
+	    type: 'horizontalBar',
+	    data: {
+		    labels: {{ labels|safe }},
+		    datasets: [{
+			    label: "Cost to Medicare",
+			    backgroundColor: {{ colorlist|safe }},
+			    data: {{ costs|safe }}
+		    }],
+	    },
+      options: {
+        scales: {
+          xAxes: [{
+            time: {
+              unit: 'month'
+            },
+            gridLines: {
+              display: false
+            },
+            ticks: {
+              maxTicksLimit: 6,
+	      fontSize: 15
+            }
+          }],
+          yAxes: [{
+            ticks: {
+              min: 0,
+              max: 15000,
+	      fontSize: 15,
+              maxTicksLimit: 5
+            },
+            gridLines: {
+              display: false
+            }
+          }],
+        },
+        legend: {
+          display: false
+        }
+      }
+    });
+    chartData.addEventListener( 'change', function(){
+	selected = chartData.options[chartData.selectedIndex].value;
+	myLineChart.data.datasets[0].data = datadict[selected];
+        myLineChart.data.labels =  labeldict[selected];
+	myLineChart.data.backgroundColor = colordict[selected];
+	myLineChart.update();
+	myCostChart.data.datasets[0].data = costdict[selected];
+	myCostChart.data.labels = labeldict[selected];
+	myCostChart.data.backgroundColor = colordict[selected];
+	myCostChart.update();
+});
     </script>
   </div>
 </body>
