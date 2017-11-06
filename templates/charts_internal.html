@@ -58,7 +58,7 @@
       <!-- Breadcrumbs-->
       <ol class="breadcrumb">
         <li class="breadcrumb-item">
-          <a href="#">Dashboard</a>
+          <a href="/">Dashboard</a>
         </li>
         <li class="breadcrumb-item active">Charts</li>
       </ol>
@@ -252,11 +252,11 @@
 	selected = chartData.options[chartData.selectedIndex].value;
 	myLineChart.data.datasets[0].data = datadict[selected];
         myLineChart.data.labels =  labeldict[selected];
-	myLineChart.data.backgroundColor = colordict[selected];
+	myLineChart.data.datasets[0].backgroundColor = colordict[selected];
 	myLineChart.update();
 	myCostChart.data.datasets[0].data = costdict[selected];
 	myCostChart.data.labels = labeldict[selected];
-	myCostChart.data.backgroundColor = colordict[selected];
+	myCostChart.data.datasets[0].backgroundColor = colordict[selected];
 	myCostChart.update();
 });
     </script>
