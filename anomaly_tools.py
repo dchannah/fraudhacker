@@ -11,8 +11,8 @@ __email__ = "dan@danhannah.site"
 
 """Tools and classes for anomaly detection in insurance claims data sets.
 
-Right now I've implemented K-means clustering, but there are plans to implement
-other outlier detection methods based on:
+Right now I've implemented K-means clustering and density based clustering, but
+there are plans to implement other outlier detection methods based on:
     - Gaussian Mixture Models
     - Decision trees
     - Multivariate regression
