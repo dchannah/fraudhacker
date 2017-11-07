@@ -1,0 +1,4 @@
+# Jupyter notebooks for FraudHacker
+* `clustering_tutorial_clean.ipynb`: A notebook that walks through the process of accessing the PostgreSQL database containing the raw CMS.gov data and the labeling of outliers in this data set using the HDBSCAN clustering algorithm.
+* `getting_provider_counts.ipynb`: A notebook that steps through the process of converting labeled outlier to per-physician outlier counts. This notebook ultimately dumps to a CSV file - a sample output of this CSV dumping procedure can be found in the [data folder](https://github.com/dchannah/fraudhacker/tree/master/data).
+* `hyperparameter_testing.ipynb`: Here I examine the stability of physician rankings with respect to the two hyperparameters in the model - the minimum cluster size and the threshold for outlier detection.

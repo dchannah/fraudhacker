@@ -1,0 +1,2 @@
+# Sample data for FraudHacker
+* outlier_count_data.csv: A sample output of outlier counts and Medicare cost calculation for each physician across a variety of states and specialties. This is the data that is produced by the outlier labeling and ranking engine implemented in FraudHacker. This data is ultimately loaded into a PostgreSQL database on an AWS EC2 instance and displayed to the user via a Flask app.
